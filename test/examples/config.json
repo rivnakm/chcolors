@@ -1,16 +1,3 @@
-# chcolors
-
-![Python](https://img.shields.io/badge/python-%23ffdd54?style=for-the-badge&logo=python&logoColor=black)
-
-Script for simultaneously switching color schemes in multiple config files
-
-## Usage
-
-### Example config
-
-First, create a config file, the default location is `$HOME/.config/chcolors/config.json`
-
-```json
 {
     "$schema": "https://raw.githubusercontent.com/rivnakm/chcolors/refs/heads/main/config.schema.json",
     "themes": [
@@ -42,14 +29,13 @@ First, create a config file, the default location is `$HOME/.config/chcolors/con
                 "^vim\\.o\\.background = \\\"(?P<type>Dark|Light)\\\"$",
                 "^vim\\.cmd\\.colorscheme\\(\\\"(?P<name>.*)\\\"\\)$"
             ]
+        },
+        {
+            "name": "zellij",
+            "root_dir": "~/.config/zellij",
+            "patterns": [
+                "^theme \\\"(?P<name>.*)\\\"$"
+            ]
         }
     ]
 }
-```
-
-### Setting the current theme
-
-```
-python chcolors.py set modus_vivendi
-```
-

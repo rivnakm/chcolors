@@ -10,9 +10,29 @@ from pathlib import Path
 from termcolor import cprint
 from typing import List, Dict
 
-# TODO: load this dynamically
-config_path = os.path.expanduser("~/.config/chcolors/config.json")
-state_path = os.path.expanduser("~/.local/state/chcolors/state.json")
+
+def config_dir() -> Path:
+    env_key = "CHCOLORS_CONFIG_DIR"
+    if env_key in os.environ:
+        return Path(os.environ[env_key]).expanduser()
+    else:
+        return Path(os.environ["HOME"]).joinpath(".config/chcolors")
+
+
+def state_dir() -> Path:
+    env_key = "CHCOLORS_STATE_DIR"
+    if env_key in os.environ:
+        return Path(os.environ[env_key]).expanduser()
+    else:
+        return Path(os.environ["HOME"]).joinpath(".local/state/chcolors")
+
+
+def config_path() -> Path:
+    return config_dir().joinpath("config.json")
+
+
+def state_path() -> Path:
+    return state_dir().joinpath("state.json")
 
 
 class ThemeType(Enum):
@@ -56,31 +76,77 @@ class Config:
     aliases: Dict[str, str]
     programs: List[Program]
 
+    @staticmethod
+    def default() -> "Config":
+        return Config([], {}, [])
+
 
 @dataclass
 class State:
     current: str | None
 
+    @staticmethod
+    def default() -> "State":
+        return State(None)
+
 
 def read_config() -> Config:
+    if not config_path().exists():
+        config = Config.default()
+        write_config(config)
+        return config
+
     data = {}
-    with open(config_path, "r") as file:
+    with open(config_path(), "r") as file:
         data = json.load(file)
 
-    themes = [Theme(theme["name"], theme["type"]) for theme in data["themes"]]
+    themes = [
+        Theme(theme["name"], ThemeType.from_str(theme["type"]))
+        for theme in data["themes"]
+    ]
     programs = [
-        Program(
-            program["name"], Path(program["root_dir"]).expanduser(), program["patterns"]
-        )
+        Program(program["name"], Path(program["root_dir"]), program["patterns"])
         for program in data["programs"]
     ]
 
-    return Config(themes, data["aliases"], programs)
+    return Config(themes, data["aliases"] if "aliases" in data else {}, programs)
+
+
+def write_config(config: Config):
+    schema_url = "https://raw.githubusercontent.com/rivnakm/chcolors/refs/heads/main/config.schema.json"
+
+    data = {
+        "$schema": schema_url,
+        "themes": [
+            {"name": theme.name, "type": str(theme.type)} for theme in config.themes
+        ],
+        "programs": [
+            {
+                "name": program.name,
+                "root_dir": str(program.root_dir),
+                "patterns": program.patterns,
+            }
+            for program in config.programs
+        ],
+    }
+    if len(config.aliases) > 0:
+        data["aliases"] = config.aliases
+
+    if not config_path().parent.exists():
+        os.makedirs(config_path().parent)
+
+    with open(config_path(), "w") as file:
+        json.dump(data, file)
 
 
 def read_state() -> State:
+    if not state_path().exists():
+        state = State.default()
+        write_state(state)
+        return state
+
     data = {}
-    with open(state_path, "r") as file:
+    with open(state_path(), "r") as file:
         data = json.load(file)
 
     return State(data["current"])
@@ -88,7 +154,11 @@ def read_state() -> State:
 
 def write_state(state: State):
     data = {"current": state.current}
-    with open(state_path, "w") as file:
+
+    if not state_path().parent.exists():
+        os.makedirs(state_path().parent)
+
+    with open(state_path(), "w") as file:
         json.dump(data, file)
 
 
@@ -169,7 +239,9 @@ def cmd_set(args):
         sys.exit(0)
 
     for prog in config.programs:
-        for file in filter(lambda entry: entry.is_file(), prog.root_dir.iterdir()):
+        for file in filter(
+            lambda entry: entry.is_file(), prog.root_dir.expanduser().iterdir()
+        ):
             contents = ""
             with open(file, "r") as f:
                 contents = f.read()

@@ -1,0 +1,74 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/rivnakm/chcolors/refs/heads/main/config.schema.json",
+    "title": "Configuration",
+    "description": "chcolors program configuration",
+    "type": "object",
+    "properties": {
+        "themes": {
+            "description": "List of registered themes",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Theme name",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "Theme type (Light/Dark)",
+                        "type": "string",
+                        "enum": [
+                            "Light",
+                            "Dark"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "type"
+                ]
+            },
+            "uniqueItems": true
+        },
+        "aliases": {
+            "description": "Theme aliases",
+            "type": "object"
+        },
+        "programs": {
+            "description": "List of programs to apply configuration to",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Program name",
+                        "type": "string"
+                    },
+                    "root_dir": {
+                        "description": "Program configuration directory",
+                        "type": "string"
+                    },
+                    "patterns": {
+                        "description": "Configuration text patterns",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "name",
+                    "root_dir",
+                    "patterns"
+                ]
+            },
+            "uniqueItems": true
+        }
+    },
+    "required": [
+        "themes",
+        "programs"
+    ]
+}
