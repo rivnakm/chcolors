@@ -281,7 +281,7 @@ def main():
     parser_set = subparsers.add_parser("set")
     parser_set.set_defaults(func=cmd_set)
     parser_set.add_argument(
-        "--force", help="Set theme even if it is marked as 'current'"
+        "--force", help="Set theme even if it is marked as 'current'", action="store_true"
     )
     parser_set.add_argument("name", help="Color scheme name")
 
